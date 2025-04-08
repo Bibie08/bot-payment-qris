@@ -11,7 +11,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Token bot Telegram dari environment variable
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TOKEN = os.getenv("7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws")
 SAWERIA_URL = "https://saweria.co/habibiezz"
 
 async def start(update: Update, context: CallbackContext) -> None:
