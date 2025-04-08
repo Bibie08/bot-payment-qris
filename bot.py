@@ -21,22 +21,19 @@ SAWERIA_URL = "https://saweria.co/habibiezz"
 if not TOKEN:
     raise ValueError("TOKEN tidak ditemukan! Pastikan sudah diset di Railway.")
 
-# Fungsi Start
-async def start(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text("Halo! Kirim nominal untuk membuat QRIS pembayaran.")
-
-# Fungsi menangani pesan dari user
 async def handle_message(update: Update, context: CallbackContext) -> None:
     text = update.message.text
     if text.isdigit():
         nominal = int(text)
-        qris_url = generate_qris(nominal)
+        qris_url = generate_qris(nominal)  # Memanggil script saweria_scraper.py
+        
         if qris_url:
-            await update.message.reply_text(f"Berikut QRIS untuk pembayaran Rp {nominal}\n{qris_url}")
+            await update.message.reply_text(f"✅ Berikut QRIS untuk pembayaran Rp {nominal}:\n{qris_url}")
         else:
-            await update.message.reply_text("Gagal membuat QRIS. Silakan coba lagi.")
+            await update.message.reply_text("❌ Gagal membuat QRIS. Coba lagi.")
     else:
-        await update.message.reply_text("Silakan kirim angka saja untuk nominal pembayaran.")
+        await update.message.reply_text("⚠️ Silakan kirim angka saja untuk nominal pembayaran.")
+
 
 # Fungsi membuat QRIS (Menggunakan Requests)
 def generate_qris(amount):
