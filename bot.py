@@ -4,6 +4,7 @@ import logging
 import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from saweria_scraper import generate_qris  # Impor dari file saweria_scraper.py
 
 # Load .env file
 load_dotenv()
@@ -21,15 +22,15 @@ SAWERIA_URL = "https://saweria.co/habibiezz"
 if not TOKEN:
     raise ValueError("TOKEN tidak ditemukan! Pastikan sudah diset di Railway.")
 
-async def start(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text("Halo! Kirim nominal untuk membuat QRIS pembayaran.")
-
 async def handle_message(update: Update, context: CallbackContext) -> None:
     text = update.message.text
     if text.isdigit():
         nominal = int(text)
         qris_url = generate_qris(nominal)
-        await update.message.reply_text(f"Berikut QRIS untuk pembayaran Rp {nominal}\n{qris_url}")
+        if qris_url:
+            await update.message.reply_text(f"Berikut QRIS untuk pembayaran Rp {nominal}\n{qris_url}")
+        else:
+            await update.message.reply_text("Gagal membuat QRIS. Silakan coba lagi.")
     else:
         await update.message.reply_text("Silakan kirim angka saja untuk nominal pembayaran.")
 
