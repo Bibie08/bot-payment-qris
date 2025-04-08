@@ -2,3 +2,4 @@ aiogram
 qrcode[pil]
 python-dotenv
 pillow
+requests
