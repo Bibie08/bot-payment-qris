@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 
 # Load token dari file .env
 load_dotenv()
-TOKEN = os.getenv("7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws")
+TOKEN = os.getenv("BOT_TOKEN")
 SAWERIA_URL = "https://saweria.co/habibiezz"
 ADMIN_ID = os.getenv("ADMIN_ID")  # Ganti dengan ID admin
 
-bot = Bot(token=7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws)
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 # Daftar produk
