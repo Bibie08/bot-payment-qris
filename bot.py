@@ -1,8 +1,12 @@
 import os
+from dotenv import load_dotenv
 import logging
 import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+
+# Load .env file
+load_dotenv()
 
 # Konfigurasi logging
 logging.basicConfig(
@@ -30,12 +34,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("Silakan kirim angka saja untuk nominal pembayaran.")
 
 def generate_qris(amount):
-    """
-    Fungsi untuk membuat QRIS di Saweria dengan nominal tertentu.
-    """
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
     payload = {
         "amount": amount,
         "name": "User",
