@@ -36,13 +36,14 @@ RUN echo "deb [signed-by=/etc/apt/keyrings/google-chrome.asc] http://dl.google.c
 # Install Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable && rm -rf /var/lib/apt/lists/*
 
-# Install ChromeDriver
-RUN CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}' | cut -d'.' -f1) \
-    && wget -q "https://chromedriver.storage.googleapis.com/${CHROME_VERSION}.0/chromedriver_linux64.zip" \
-    && unzip chromedriver_linux64.zip \
-    && mv chromedriver /usr/bin/chromedriver \
-    && chmod +x /usr/bin/chromedriver \
-    && rm chromedriver_linux64.zip
+# Install ChromeDriver yang sesuai dengan versi Chrome
+RUN CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}') && \
+    CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION") && \
+    wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" && \
+    unzip chromedriver_linux64.zip && \
+    mv chromedriver /usr/bin/chromedriver && \
+    chmod +x /usr/bin/chromedriver && \
+    rm chromedriver_linux64.zip
 
 # Set Workdir
 WORKDIR /app
