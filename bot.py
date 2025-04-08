@@ -1,61 +1,50 @@
 import asyncio
 import requests
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# Ganti dengan token bot Telegram kamu
+# Token bot dari BotFather
 TOKEN = "7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws"
-SAWERIA_URL = "https://saweria.co/habibiezz"
+SAWERIA_USERNAME = "https://saweria.co/habibiezz"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+# Fungsi untuk membuat QRIS otomatis dari Saweria
 async def generate_qris(nominal):
-    """
-    Fungsi untuk mengisi form Saweria secara otomatis dan mendapatkan QRIS.
-    """
-    form_data = {
-        "nominal": nominal,
-        "name": "Bot User",
+    url = "https://saweria.co/api/create_qris"  # Pastikan URL ini benar
+    data = {
+        "username": SAWERIA_USERNAME,
+        "amount": nominal,
+        "name": "User Bot",
         "email": "bot@saweria.co",
-        "message": "Pembayaran otomatis via bot",
-        "terms": "on",  # Menyetujui checkbox
+        "message": "Pembayaran otomatis",
+        "agree_terms": True
     }
-    
-    response = requests.post(SAWERIA_URL, data=form_data)
-    
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.post(url, json=data, headers=headers)
     if response.status_code == 200:
-        # Coba ekstrak URL QRIS dari respons
-        qris_url = "https://saweria.co/qris_generated_example.png"  # Gantilah dengan cara parsing HTML jika diperlukan
+        qris_url = response.json().get("qris_url")
         return qris_url
-    else:
-        return None
+    return None
 
-@dp.message_handler(commands=["start"])
+# Command /start
+@dp.message(lambda message: message.text == "/start")
 async def start(message: types.Message):
-    await message.reply("Halo! Ketik /bayar untuk melakukan pembayaran.")
+    await message.answer("Halo! Silakan ketik nominal yang ingin kamu bayar.")
 
-@dp.message_handler(commands=["bayar"])
-async def bayar(message: types.Message):
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(text="Rp 10.000", callback_data="pay_10000"))
-    keyboard.add(InlineKeyboardButton(text="Rp 25.000", callback_data="pay_25000"))
-    keyboard.add(InlineKeyboardButton(text="Rp 50.000", callback_data="pay_50000"))
-    await message.reply("Pilih nominal pembayaran:", reply_markup=keyboard)
+# Menangani input nominal
+@dp.message(lambda message: message.text.isdigit())
+async def handle_payment(message: types.Message):
+    nominal = int(message.text)
+    qris_link = await generate_qris(nominal)
 
-@dp.callback_query_handler(lambda c: c.data.startswith("pay_"))
-async def process_payment(callback_query: types.CallbackQuery):
-    nominal = int(callback_query.data.split("_")[1])
-    await bot.answer_callback_query(callback_query.id)
-    
-    await bot.send_message(callback_query.from_user.id, "Sedang memproses pembayaran...")
-    qris_url = await generate_qris(nominal)
-    
-    if qris_url:
-        await bot.send_photo(callback_query.from_user.id, qris_url, caption=f"Silakan scan QRIS untuk membayar Rp {nominal}")
+    if qris_link:
+        await message.answer(f"Silakan bayar dengan QRIS berikut:\n{qris_link}")
     else:
-        await bot.send_message(callback_query.from_user.id, "Gagal mendapatkan QRIS. Coba lagi nanti.")
+        await message.answer("Gagal membuat QRIS. Coba lagi.")
 
+# Menjalankan bot
 async def main():
     await dp.start_polling(bot)
 
