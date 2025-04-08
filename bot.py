@@ -4,7 +4,6 @@ import logging
 import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
-from saweria_scraper import generate_qris  # Impor dari file saweria_scraper.py
 
 # Load .env file
 load_dotenv()
@@ -22,6 +21,11 @@ SAWERIA_URL = "https://saweria.co/habibiezz"
 if not TOKEN:
     raise ValueError("TOKEN tidak ditemukan! Pastikan sudah diset di Railway.")
 
+# Fungsi Start
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("Halo! Kirim nominal untuk membuat QRIS pembayaran.")
+
+# Fungsi menangani pesan dari user
 async def handle_message(update: Update, context: CallbackContext) -> None:
     text = update.message.text
     if text.isdigit():
@@ -34,6 +38,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text("Silakan kirim angka saja untuk nominal pembayaran.")
 
+# Fungsi membuat QRIS (Menggunakan Requests)
 def generate_qris(amount):
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     payload = {
@@ -49,11 +54,12 @@ def generate_qris(amount):
             return response.url  # Sesuaikan dengan format URL QRIS yang dihasilkan
         else:
             logger.error(f"Error Saweria: {response.status_code} - {response.text}")
-            return "Gagal membuat QRIS. Coba lagi."
+            return None
     except Exception as e:
         logger.error(f"Exception saat request ke Saweria: {e}")
-        return "Terjadi kesalahan saat menghubungi Saweria."
+        return None
 
+# Fungsi utama menjalankan bot
 def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
