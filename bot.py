@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Ganti dengan token bot Telegram kamu
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+TOKEN = "7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws"
 SAWERIA_URL = "https://saweria.co/habibiezz"
 
 bot = Bot(token=TOKEN)
