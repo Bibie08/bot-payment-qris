@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Ganti dengan token bot Telegram kamu
 TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-SAWERIA_URL = "https://saweria.co/YOUR_SAWERIA_USERNAME"
+SAWERIA_URL = "https://saweria.co/habibiezz"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
