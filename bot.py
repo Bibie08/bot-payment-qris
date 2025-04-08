@@ -1,37 +1,52 @@
+import os
+import logging
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from saweria_autofill import isi_form_saweria
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+import requests
 
-TOKEN = "7906182534:AAEcmieckSza4Sf8yXa2gQMBVWjScSmZiws"
+# Konfigurasi logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-def handle_payment(update: Update, context: CallbackContext):
-    try:
-        nominal = int(update.message.text)  # Ambil nominal dari pesan user
-        if nominal < 1000:
-            update.message.reply_text("Minimal pembayaran adalah Rp 1.000")
-            return
-        
-        update.message.reply_text(f"Memproses pembayaran Rp {nominal}...")
-        
-        # Panggil fungsi isi_form_saweria() untuk mendapatkan QRIS
-        qris_image = isi_form_saweria(nominal)
+# Token bot Telegram dari environment variable
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+SAWERIA_URL = "https://saweria.co/habibiezz"
 
-        if qris_image:
-            update.message.reply_photo(photo=qris_image, caption="Berikut adalah QRIS untuk pembayaran Anda.")
-        else:
-            update.message.reply_text("Gagal mendapatkan QRIS, coba lagi nanti.")
-    
-    except ValueError:
-        update.message.reply_text("Mohon masukkan nominal yang valid.")
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("Halo! Kirim nominal untuk membuat QRIS pembayaran.")
+
+async def handle_message(update: Update, context: CallbackContext) -> None:
+    text = update.message.text
+    if text.isdigit():
+        nominal = int(text)
+        qris_url = generate_qris(nominal)
+        await update.message.reply_text(f"Berikut QRIS untuk pembayaran Rp {nominal}\n{qris_url}")
+    else:
+        await update.message.reply_text("Silakan kirim angka saja untuk nominal pembayaran.")
+
+
+def generate_qris(amount):
+    payload = {
+        "amount": amount,
+        "name": "User",
+        "email": "user@example.com",
+        "message": "Pembayaran via bot",
+    }
+    response = requests.post(SAWERIA_URL, data=payload)
+    if response.status_code == 200:
+        return response.url  # Sesuaikan dengan format URL QRIS yang dihasilkan
+    return "Gagal membuat QRIS. Coba lagi."
+
 
 def main():
-    updater = Updater(TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_payment))
-    
-    updater.start_polling()
-    updater.idle()
+    logger.info("Bot telah berjalan...")
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
