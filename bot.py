@@ -30,10 +30,12 @@ def generate_qr(data, filename="qris.png"):
 # Menu utama
 @dp.message(Command("start"))
 async def start(message: Message):
-    keyboard = InlineKeyboardMarkup()
-    for key, product in PRODUCTS.items():
-        keyboard.add(InlineKeyboardButton(text=f"{product['name']} - Rp{product['price']}", callback_data=f"order_{key}"))
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=f"{product['name']} - Rp{product['price']}", callback_data=f"order_{key}")]
+        for key, product in PRODUCTS.items()
+    ])
     await message.answer("Silakan pilih produk:", reply_markup=keyboard)
+
 
 # Menangani order
 @dp.callback_query()
