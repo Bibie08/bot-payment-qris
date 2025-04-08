@@ -1,69 +1,39 @@
-import os
-from dotenv import load_dotenv
-import logging
-import requests
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
-# Load .env file
-load_dotenv()
-
-# Konfigurasi logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# Ambil Token dari environment variable
-TOKEN = os.getenv("BOT_TOKEN")
 SAWERIA_URL = "https://saweria.co/habibiezz"
 
-if not TOKEN:
-    raise ValueError("TOKEN tidak ditemukan! Pastikan sudah diset di Railway.")
-
-async def handle_message(update: Update, context: CallbackContext) -> None:
-    text = update.message.text
-    if text.isdigit():
-        nominal = int(text)
-        qris_url = generate_qris(nominal)  # Memanggil script saweria_scraper.py
-        
-        if qris_url:
-            await update.message.reply_text(f"✅ Berikut QRIS untuk pembayaran Rp {nominal}:\n{qris_url}")
-        else:
-            await update.message.reply_text("❌ Gagal membuat QRIS. Coba lagi.")
-    else:
-        await update.message.reply_text("⚠️ Silakan kirim angka saja untuk nominal pembayaran.")
-
-
-# Fungsi membuat QRIS (Menggunakan Requests)
 def generate_qris(amount):
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    payload = {
-        "amount": amount,
-        "name": "User",
-        "email": "user@example.com",
-        "message": "Pembayaran via bot",
-    }
-    
     try:
-        response = requests.post(SAWERIA_URL, data=payload, headers=headers)
-        if response.status_code == 200:
-            return response.url  # Sesuaikan dengan format URL QRIS yang dihasilkan
-        else:
-            logger.error(f"Error Saweria: {response.status_code} - {response.text}")
-            return None
+        # Setup WebDriver
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")  # Jalankan tanpa tampilan GUI
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver.get(SAWERIA_URL)
+        time.sleep(3)  # Tunggu halaman termuat
+
+        # Isi form Saweria
+        driver.find_element(By.NAME, "amount").send_keys(str(amount))
+        driver.find_element(By.NAME, "name").send_keys("User Bot")
+        driver.find_element(By.NAME, "email").send_keys("user@example.com")
+        driver.find_element(By.NAME, "message").send_keys("Pembayaran via bot")
+
+        # Submit form
+        driver.find_element(By.NAME, "submit").click()
+        time.sleep(5)  # Tunggu QRIS muncul
+
+        # Ambil URL QRIS yang dihasilkan
+        qris_url = driver.current_url
+        driver.quit()  # Tutup browser
+        return qris_url
+
     except Exception as e:
-        logger.error(f"Exception saat request ke Saweria: {e}")
+        print(f"❌ Error: {e}")
         return None
-
-# Fungsi utama menjalankan bot
-def main():
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
-    logger.info("Bot telah berjalan...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
